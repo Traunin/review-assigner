@@ -1,0 +1,70 @@
+name: review_assigner
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: review_assigner_db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - internal
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate:v4.17.0
+    container_name: review_assigner_migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - internal
+    volumes:
+      - ./migrations:/migrations
+    command: [
+      "-path", "/migrations",
+      "-database", "postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable",
+      "up"
+    ]
+    restart: no
+
+  app:
+    build: .
+    container_name: review_assigner_app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      SERVER_PORT: ${SERVER_PORT}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    networks:
+      - internal
+    restart: unless-stopped
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  db_data:
