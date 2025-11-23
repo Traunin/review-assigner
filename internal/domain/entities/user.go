@@ -67,3 +67,7 @@ func (user *User) TeamID() *TeamID {
 func (user *User) SetTeamID(teamID *TeamID) {
 	user.team_id = teamID
 }
+
+func (user *User) SetUsername(username string) {
+	user.username = username
+}
