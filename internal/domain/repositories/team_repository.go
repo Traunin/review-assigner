@@ -1,10 +1,20 @@
 package repositories
 
-import "github.com/Traunin/review-assigner/internal/domain/entities"
+import (
+	"context"
+
+	"github.com/Traunin/review-assigner/internal/domain/entities"
+)
 
 type TeamRepository interface {
 	Repository[entities.Team, entities.TeamID]
-	FindByName(name string) (*entities.Team, error)
-	FindTeamsByUserID(id entities.UserID) ([]*entities.Team, error)
-	FindActiveReviewersByTeamID(id entities.TeamID) ([]*entities.User, error)
+	FindByName(ctx context.Context, name string) (*entities.Team, error)
+	FindTeamsByUserID(
+		ctx context.Context,
+		id entities.UserID,
+	) ([]*entities.Team, error)
+	FindActiveReviewersByTeamID(
+		ctx context.Context,
+		id entities.TeamID,
+	) ([]*entities.User, error)
 }
