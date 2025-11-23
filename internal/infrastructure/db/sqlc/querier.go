@@ -15,6 +15,7 @@ type Querier interface {
 	CreateTeam(ctx context.Context, teamName string) (Team, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetActiveTeamMembers(ctx context.Context, teamID int32) ([]User, error)
+	GetActiveUsers(ctx context.Context) ([]User, error)
 	GetOpenPRs(ctx context.Context) ([]PullRequest, error)
 	GetPRsByAuthor(ctx context.Context, authorID string) ([]PullRequest, error)
 	GetPRsByReviewer(ctx context.Context, userID string) ([]GetPRsByReviewerRow, error)

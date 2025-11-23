@@ -55,6 +55,32 @@ func (q *Queries) GetActiveTeamMembers(ctx context.Context, teamID int32) ([]Use
 	return items, nil
 }
 
+const getActiveUsers = `-- name: GetActiveUsers :many
+SELECT user_id, username, is_active
+FROM users
+WHERE is_active = true
+`
+
+func (q *Queries) GetActiveUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, getActiveUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(&i.UserID, &i.Username, &i.IsActive); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByID = `-- name: GetUserByID :one
 SELECT user_id, username, is_active
 FROM users

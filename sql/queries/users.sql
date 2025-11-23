@@ -24,3 +24,8 @@ WHERE tm.team_id = $1 AND u.is_active = true;
 SELECT EXISTS (
     SELECT 1 FROM users WHERE user_id = $1
 );
+
+-- name: GetActiveUsers :many
+SELECT user_id, username, is_active
+FROM users
+WHERE is_active = true;
