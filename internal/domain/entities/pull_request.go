@@ -27,10 +27,16 @@ func NewPullRequest(
 	name string,
 	authorID UserID,
 	status PRStatus,
-	assignedUserIDs []UserID,
+	reviewers []Reviewer,
 	createdAt time.Time,
 	mergedAt *time.Time,
 ) (*PullRequest, error) {
+	for _, reviewer := range reviewers {
+		if reviewer.UserID == authorID {
+			return nil, ErrAuthorIsReviewer
+		}
+	}
+
 	pr := &PullRequest{
 		id:        id,
 		name:      name,
@@ -38,21 +44,11 @@ func NewPullRequest(
 		status:    status,
 		createdAt: createdAt,
 		mergedAt:  mergedAt,
-		reviewers: make([]Reviewer, len(assignedUserIDs)),
+		reviewers: reviewers,
 	}
 
 	if err := pr.validate(); err != nil {
 		return nil, err
-	}
-
-	for i, uid := range assignedUserIDs {
-		if uid == authorID {
-			return nil, ErrAuthorIsReviewer
-		}
-		pr.reviewers[i] = Reviewer{
-			UserID:     uid,
-			AssignedAt: time.Now(),
-		}
 	}
 
 	return pr, nil
@@ -163,4 +159,39 @@ func (pr *PullRequest) ReviewerIDs() []UserID {
 		ids[i] = r.UserID
 	}
 	return ids
+}
+
+func (pr *PullRequest) ID() PullRequestID {
+	return pr.id
+}
+
+func (pr *PullRequest) Name() string {
+	return pr.name
+}
+
+func (pr *PullRequest) AuthorID() UserID {
+	return pr.authorID
+}
+
+func (pr *PullRequest) Status() PRStatus {
+	return pr.status
+}
+
+func (pr *PullRequest) CreatedAt() time.Time {
+	return pr.createdAt
+}
+
+func (pr *PullRequest) MergedAt() time.Time {
+	if pr.mergedAt == nil {
+		return time.Time{}
+	}
+	return *pr.mergedAt
+}
+
+func (pr *PullRequest) MergedAtPtr() *time.Time {
+    return pr.mergedAt
+}
+
+func (pr *PullRequest) Reviewers() []Reviewer {
+	return slices.Clone(pr.reviewers)
 }
