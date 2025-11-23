@@ -7,7 +7,7 @@ import (
 )
 
 type PullRequestRepository interface {
-	Repository[entities.User, entities.UserID]
+	Repository[entities.PullRequest, entities.PullRequestID]
 	FindPullRequestByUserID(
 		ctx context.Context,
 		id entities.UserID,
