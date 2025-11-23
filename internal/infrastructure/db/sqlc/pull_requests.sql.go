@@ -24,11 +24,11 @@ RETURNING pull_request_id, pull_request_name, author_id, status, created_at, mer
 `
 
 type CreatePullRequestParams struct {
-	PullRequestID   string           `json:"pull_request_id"`
-	PullRequestName string           `json:"pull_request_name"`
-	AuthorID        string           `json:"author_id"`
-	Status          string           `json:"status"`
-	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	PullRequestID   string             `json:"pull_request_id"`
+	PullRequestName string             `json:"pull_request_name"`
+	AuthorID        string             `json:"author_id"`
+	Status          string             `json:"status"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 }
 
 func (q *Queries) CreatePullRequest(ctx context.Context, arg CreatePullRequestParams) (PullRequest, error) {
@@ -49,6 +49,16 @@ func (q *Queries) CreatePullRequest(ctx context.Context, arg CreatePullRequestPa
 		&i.MergedAt,
 	)
 	return i, err
+}
+
+const deletePullRequest = `-- name: DeletePullRequest :exec
+DELETE FROM pull_requests
+WHERE pull_request_id = $1
+`
+
+func (q *Queries) DeletePullRequest(ctx context.Context, pullRequestID string) error {
+	_, err := q.db.Exec(ctx, deletePullRequest, pullRequestID)
+	return err
 }
 
 const getOpenPRs = `-- name: GetOpenPRs :many
@@ -157,6 +167,45 @@ func (q *Queries) GetPullRequestByID(ctx context.Context, pullRequestID string) 
 	return i, err
 }
 
+const getPullRequests = `-- name: GetPullRequests :many
+SELECT 
+    pull_request_id, 
+    pull_request_name, 
+    author_id, 
+    status,
+    created_at,
+    merged_at
+FROM pull_requests
+ORDER BY created_at DESC
+`
+
+func (q *Queries) GetPullRequests(ctx context.Context) ([]PullRequest, error) {
+	rows, err := q.db.Query(ctx, getPullRequests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PullRequest{}
+	for rows.Next() {
+		var i PullRequest
+		if err := rows.Scan(
+			&i.PullRequestID,
+			&i.PullRequestName,
+			&i.AuthorID,
+			&i.Status,
+			&i.CreatedAt,
+			&i.MergedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const pRExists = `-- name: PRExists :one
 SELECT EXISTS(
     SELECT 1 FROM pull_requests WHERE pull_request_id = $1
@@ -180,9 +229,9 @@ RETURNING pull_request_id, pull_request_name, author_id, status, created_at, mer
 `
 
 type UpdatePRStatusParams struct {
-	PullRequestID string           `json:"pull_request_id"`
-	Status        string           `json:"status"`
-	MergedAt      pgtype.Timestamp `json:"merged_at"`
+	PullRequestID string             `json:"pull_request_id"`
+	Status        string             `json:"status"`
+	MergedAt      pgtype.Timestamptz `json:"merged_at"`
 }
 
 func (q *Queries) UpdatePRStatus(ctx context.Context, arg UpdatePRStatusParams) (PullRequest, error) {

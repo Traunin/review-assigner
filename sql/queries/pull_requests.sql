@@ -56,3 +56,18 @@ SELECT
 FROM pull_requests
 WHERE status = 'OPEN'
 ORDER BY created_at DESC;
+
+-- name: DeletePullRequest :exec
+DELETE FROM pull_requests
+WHERE pull_request_id = $1;
+
+-- name: GetPullRequests :many
+SELECT 
+    pull_request_id, 
+    pull_request_name, 
+    author_id, 
+    status,
+    created_at,
+    merged_at
+FROM pull_requests
+ORDER BY created_at DESC;

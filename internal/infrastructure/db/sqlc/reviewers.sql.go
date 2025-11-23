@@ -17,9 +17,9 @@ VALUES ($1, $2, $3)
 `
 
 type AddReviewerParams struct {
-	PullRequestID string           `json:"pull_request_id"`
-	UserID        string           `json:"user_id"`
-	AssignedAt    pgtype.Timestamp `json:"assigned_at"`
+	PullRequestID string             `json:"pull_request_id"`
+	UserID        string             `json:"user_id"`
+	AssignedAt    pgtype.Timestamptz `json:"assigned_at"`
 }
 
 func (q *Queries) AddReviewer(ctx context.Context, arg AddReviewerParams) error {
@@ -92,8 +92,8 @@ ORDER BY assigned_at
 `
 
 type GetReviewersByPRRow struct {
-	UserID     string           `json:"user_id"`
-	AssignedAt pgtype.Timestamp `json:"assigned_at"`
+	UserID     string             `json:"user_id"`
+	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
 }
 
 func (q *Queries) GetReviewersByPR(ctx context.Context, pullRequestID string) ([]GetReviewersByPRRow, error) {
@@ -162,10 +162,10 @@ ON CONFLICT DO NOTHING
 `
 
 type ReplaceReviewerParams struct {
-	PullRequestID string           `json:"pull_request_id"`
-	UserID        string           `json:"user_id"`
-	UserID_2      string           `json:"user_id_2"`
-	AssignedAt    pgtype.Timestamp `json:"assigned_at"`
+	PullRequestID string             `json:"pull_request_id"`
+	UserID        string             `json:"user_id"`
+	UserID_2      string             `json:"user_id_2"`
+	AssignedAt    pgtype.Timestamptz `json:"assigned_at"`
 }
 
 func (q *Queries) ReplaceReviewer(ctx context.Context, arg ReplaceReviewerParams) error {

@@ -6,34 +6,44 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	AddReviewer(ctx context.Context, arg AddReviewerParams) error
-	AddTeamMember(ctx context.Context, arg AddTeamMemberParams) error
 	CreatePullRequest(ctx context.Context, arg CreatePullRequestParams) (PullRequest, error)
 	CreateTeam(ctx context.Context, teamName string) (Team, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	GetActiveTeamMembers(ctx context.Context, teamID int32) ([]User, error)
+	DeletePullRequest(ctx context.Context, pullRequestID string) error
+	DeleteTeam(ctx context.Context, id int32) error
+	DeleteUser(ctx context.Context, userID string) error
+	GetActiveUsers(ctx context.Context) ([]User, error)
+	GetActiveUsersByTeamID(ctx context.Context, teamID pgtype.Int4) ([]User, error)
 	GetOpenPRs(ctx context.Context) ([]PullRequest, error)
 	GetPRsByAuthor(ctx context.Context, authorID string) ([]PullRequest, error)
 	GetPRsByReviewer(ctx context.Context, userID string) ([]GetPRsByReviewerRow, error)
 	GetPullRequestByID(ctx context.Context, pullRequestID string) (PullRequest, error)
+	GetPullRequests(ctx context.Context) ([]PullRequest, error)
 	GetReviewerCount(ctx context.Context, pullRequestID string) (int64, error)
 	GetReviewersByPR(ctx context.Context, pullRequestID string) ([]GetReviewersByPRRow, error)
 	GetTeamByID(ctx context.Context, id int32) (Team, error)
 	GetTeamByName(ctx context.Context, teamName string) (Team, error)
-	GetTeamMemberCount(ctx context.Context, teamID int32) (int64, error)
-	GetTeamWithMembers(ctx context.Context, teamName string) ([]GetTeamWithMembersRow, error)
+	GetTeamByUserID(ctx context.Context, userID string) (Team, error)
+	GetTeamMemberCount(ctx context.Context, teamID pgtype.Int4) (int64, error)
+	GetTeams(ctx context.Context) ([]Team, error)
 	GetUserByID(ctx context.Context, userID string) (User, error)
+	GetUsers(ctx context.Context) ([]User, error)
+	GetUsersByTeamID(ctx context.Context, teamID pgtype.Int4) ([]User, error)
 	IsUserReviewer(ctx context.Context, arg IsUserReviewerParams) (bool, error)
 	PRExists(ctx context.Context, pullRequestID string) (bool, error)
 	RemoveReviewer(ctx context.Context, arg RemoveReviewerParams) error
-	RemoveTeamMember(ctx context.Context, arg RemoveTeamMemberParams) error
 	ReplaceReviewer(ctx context.Context, arg ReplaceReviewerParams) error
 	TeamExists(ctx context.Context, teamName string) (bool, error)
 	UpdatePRStatus(ctx context.Context, arg UpdatePRStatusParams) (PullRequest, error)
-	UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (User, error)
+	UpdateTeam(ctx context.Context, arg UpdateTeamParams) error
+	UpdateUser(ctx context.Context, arg UpdateUserParams) error
+	UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (UpdateUserStatusRow, error)
 	UserExists(ctx context.Context, userID string) (bool, error)
 }
 

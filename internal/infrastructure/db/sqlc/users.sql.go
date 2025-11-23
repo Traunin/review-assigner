@@ -7,36 +7,58 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (user_id, username, is_active)
-VALUES ($1, $2, $3)
-RETURNING user_id, username, is_active
+INSERT INTO users (user_id, username, is_active, team_id)
+VALUES ($1, $2, $3, $4)
+RETURNING user_id, username, is_active, team_id
 `
 
 type CreateUserParams struct {
-	UserID   string `json:"user_id"`
-	Username string `json:"username"`
-	IsActive bool   `json:"is_active"`
+	UserID   string      `json:"user_id"`
+	Username string      `json:"username"`
+	IsActive bool        `json:"is_active"`
+	TeamID   pgtype.Int4 `json:"team_id"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.UserID, arg.Username, arg.IsActive)
+	row := q.db.QueryRow(ctx, createUser,
+		arg.UserID,
+		arg.Username,
+		arg.IsActive,
+		arg.TeamID,
+	)
 	var i User
-	err := row.Scan(&i.UserID, &i.Username, &i.IsActive)
+	err := row.Scan(
+		&i.UserID,
+		&i.Username,
+		&i.IsActive,
+		&i.TeamID,
+	)
 	return i, err
 }
 
-const getActiveTeamMembers = `-- name: GetActiveTeamMembers :many
-SELECT u.user_id, u.username, u.is_active
-FROM users u
-JOIN team_members tm ON u.user_id = tm.user_id
-WHERE tm.team_id = $1 AND u.is_active = true
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM users
+WHERE user_id = $1
 `
 
-func (q *Queries) GetActiveTeamMembers(ctx context.Context, teamID int32) ([]User, error) {
-	rows, err := q.db.Query(ctx, getActiveTeamMembers, teamID)
+func (q *Queries) DeleteUser(ctx context.Context, userID string) error {
+	_, err := q.db.Exec(ctx, deleteUser, userID)
+	return err
+}
+
+const getActiveUsers = `-- name: GetActiveUsers :many
+SELECT user_id, username, is_active, team_id
+FROM users
+WHERE is_active = true
+`
+
+func (q *Queries) GetActiveUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, getActiveUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +66,12 @@ func (q *Queries) GetActiveTeamMembers(ctx context.Context, teamID int32) ([]Use
 	items := []User{}
 	for rows.Next() {
 		var i User
-		if err := rows.Scan(&i.UserID, &i.Username, &i.IsActive); err != nil {
+		if err := rows.Scan(
+			&i.UserID,
+			&i.Username,
+			&i.IsActive,
+			&i.TeamID,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -55,8 +82,52 @@ func (q *Queries) GetActiveTeamMembers(ctx context.Context, teamID int32) ([]Use
 	return items, nil
 }
 
+const getActiveUsersByTeamID = `-- name: GetActiveUsersByTeamID :many
+SELECT user_id, username, is_active, team_id
+FROM users
+WHERE team_id = $1 AND is_active = true
+`
+
+func (q *Queries) GetActiveUsersByTeamID(ctx context.Context, teamID pgtype.Int4) ([]User, error) {
+	rows, err := q.db.Query(ctx, getActiveUsersByTeamID, teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.UserID,
+			&i.Username,
+			&i.IsActive,
+			&i.TeamID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTeamByUserID = `-- name: GetTeamByUserID :one
+SELECT t.id, t.team_name FROM teams t
+JOIN users u ON u.team_id = t.id
+WHERE u.user_id = $1
+`
+
+func (q *Queries) GetTeamByUserID(ctx context.Context, userID string) (Team, error) {
+	row := q.db.QueryRow(ctx, getTeamByUserID, userID)
+	var i Team
+	err := row.Scan(&i.ID, &i.TeamName)
+	return i, err
+}
+
 const getUserByID = `-- name: GetUserByID :one
-SELECT user_id, username, is_active
+SELECT user_id, username, is_active, team_id
 FROM users
 WHERE user_id = $1
 `
@@ -64,8 +135,97 @@ WHERE user_id = $1
 func (q *Queries) GetUserByID(ctx context.Context, userID string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByID, userID)
 	var i User
-	err := row.Scan(&i.UserID, &i.Username, &i.IsActive)
+	err := row.Scan(
+		&i.UserID,
+		&i.Username,
+		&i.IsActive,
+		&i.TeamID,
+	)
 	return i, err
+}
+
+const getUsers = `-- name: GetUsers :many
+SELECT user_id, username, is_active, team_id
+FROM users
+`
+
+func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, getUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.UserID,
+			&i.Username,
+			&i.IsActive,
+			&i.TeamID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersByTeamID = `-- name: GetUsersByTeamID :many
+SELECT user_id, username, is_active, team_id
+FROM users
+WHERE team_id = $1
+`
+
+func (q *Queries) GetUsersByTeamID(ctx context.Context, teamID pgtype.Int4) ([]User, error) {
+	rows, err := q.db.Query(ctx, getUsersByTeamID, teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.UserID,
+			&i.Username,
+			&i.IsActive,
+			&i.TeamID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateUser = `-- name: UpdateUser :exec
+UPDATE users
+SET username = $2, is_active = $3, team_id = $4
+WHERE user_id = $1
+`
+
+type UpdateUserParams struct {
+	UserID   string      `json:"user_id"`
+	Username string      `json:"username"`
+	IsActive bool        `json:"is_active"`
+	TeamID   pgtype.Int4 `json:"team_id"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
+	_, err := q.db.Exec(ctx, updateUser,
+		arg.UserID,
+		arg.Username,
+		arg.IsActive,
+		arg.TeamID,
+	)
+	return err
 }
 
 const updateUserStatus = `-- name: UpdateUserStatus :one
@@ -80,9 +240,15 @@ type UpdateUserStatusParams struct {
 	IsActive bool   `json:"is_active"`
 }
 
-func (q *Queries) UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (User, error) {
+type UpdateUserStatusRow struct {
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
+	IsActive bool   `json:"is_active"`
+}
+
+func (q *Queries) UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (UpdateUserStatusRow, error) {
 	row := q.db.QueryRow(ctx, updateUserStatus, arg.UserID, arg.IsActive)
-	var i User
+	var i UpdateUserStatusRow
 	err := row.Scan(&i.UserID, &i.Username, &i.IsActive)
 	return i, err
 }
