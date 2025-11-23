@@ -54,18 +54,18 @@ func (ns NullPrStatus) Value() (driver.Value, error) {
 }
 
 type PullRequest struct {
-	PullRequestID   string           `json:"pull_request_id"`
-	PullRequestName string           `json:"pull_request_name"`
-	AuthorID        string           `json:"author_id"`
-	Status          string           `json:"status"`
-	CreatedAt       pgtype.Timestamp `json:"created_at"`
-	MergedAt        pgtype.Timestamp `json:"merged_at"`
+	PullRequestID   string             `json:"pull_request_id"`
+	PullRequestName string             `json:"pull_request_name"`
+	AuthorID        string             `json:"author_id"`
+	Status          string             `json:"status"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	MergedAt        pgtype.Timestamptz `json:"merged_at"`
 }
 
 type Reviewer struct {
-	PullRequestID string           `json:"pull_request_id"`
-	UserID        string           `json:"user_id"`
-	AssignedAt    pgtype.Timestamp `json:"assigned_at"`
+	PullRequestID string             `json:"pull_request_id"`
+	UserID        string             `json:"user_id"`
+	AssignedAt    pgtype.Timestamptz `json:"assigned_at"`
 }
 
 type Team struct {

@@ -24,11 +24,11 @@ RETURNING pull_request_id, pull_request_name, author_id, status, created_at, mer
 `
 
 type CreatePullRequestParams struct {
-	PullRequestID   string           `json:"pull_request_id"`
-	PullRequestName string           `json:"pull_request_name"`
-	AuthorID        string           `json:"author_id"`
-	Status          string           `json:"status"`
-	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	PullRequestID   string             `json:"pull_request_id"`
+	PullRequestName string             `json:"pull_request_name"`
+	AuthorID        string             `json:"author_id"`
+	Status          string             `json:"status"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 }
 
 func (q *Queries) CreatePullRequest(ctx context.Context, arg CreatePullRequestParams) (PullRequest, error) {
@@ -180,9 +180,9 @@ RETURNING pull_request_id, pull_request_name, author_id, status, created_at, mer
 `
 
 type UpdatePRStatusParams struct {
-	PullRequestID string           `json:"pull_request_id"`
-	Status        string           `json:"status"`
-	MergedAt      pgtype.Timestamp `json:"merged_at"`
+	PullRequestID string             `json:"pull_request_id"`
+	Status        string             `json:"status"`
+	MergedAt      pgtype.Timestamptz `json:"merged_at"`
 }
 
 func (q *Queries) UpdatePRStatus(ctx context.Context, arg UpdatePRStatusParams) (PullRequest, error) {

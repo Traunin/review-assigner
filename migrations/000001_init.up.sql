@@ -26,8 +26,8 @@ CREATE TABLE pull_requests (
     pull_request_name VARCHAR(500) NOT NULL,
     author_id VARCHAR(255) NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
     status pr_status NOT NULL DEFAULT 'OPEN',
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    merged_at TIMESTAMP NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    merged_at TIMESTAMP WITH TIME ZONE NULL,
     CONSTRAINT check_merged_at CHECK (
         (status = 'MERGED' AND merged_at IS NOT NULL) OR
         (status = 'OPEN' AND merged_at IS NULL)
@@ -39,7 +39,7 @@ CREATE INDEX pull_requests_status_index ON pull_requests (status);
 CREATE TABLE reviewers (
     pull_request_id VARCHAR(255) NOT NULL REFERENCES pull_requests (pull_request_id) ON DELETE CASCADE,
     user_id VARCHAR(255) NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
-    assigned_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    assigned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     PRIMARY KEY (pull_request_id, user_id)
 );
 CREATE INDEX reviewers_user_id_index ON reviewers (user_id);
