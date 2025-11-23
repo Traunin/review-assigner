@@ -20,8 +20,8 @@ var (
 	ErrNoCandidate     = errors.New("no candidate")
 )
 
-type PullRequestDomainService interface {
-	CreateWithReviewers(
+type ReviewerAssignmentService interface {
+	CreateAndAssign(
 		ctx context.Context,
 		pr *entities.PullRequest,
 	) (*entities.PullRequest, error)
@@ -36,30 +36,28 @@ type PullRequestDomainService interface {
 	) (*entities.PullRequest, error)
 }
 
-type pullRequestDomainService struct {
+type reviewerAssignmentService struct {
 	prRepo   repositories.PullRequestRepository
 	userRepo repositories.UserRepository
 	teamRepo repositories.TeamRepository
 }
 
-func NewPullRequestDomainService(
+func NewReviewerAssignmentService(
 	userRepo repositories.UserRepository,
 	prRepo repositories.PullRequestRepository,
 	teamRepo repositories.TeamRepository,
-) PullRequestDomainService {
-
-	return &pullRequestDomainService{
+) ReviewerAssignmentService {
+	return &reviewerAssignmentService{
 		userRepo: userRepo,
 		prRepo:   prRepo,
 		teamRepo: teamRepo,
 	}
 }
 
-func (s *pullRequestDomainService) CreateWithReviewers(
+func (s *reviewerAssignmentService) CreateAndAssign(
 	ctx context.Context,
 	pr *entities.PullRequest,
 ) (*entities.PullRequest, error) {
-
 	existing, err := s.prRepo.FindByID(ctx, pr.ID())
 	if err != nil {
 		return nil, err
@@ -146,7 +144,7 @@ func selectReplacementReviewer(
 	return selected[0], nil
 }
 
-func (s *pullRequestDomainService) ReassignReviewer(
+func (s *reviewerAssignmentService) ReassignReviewer(
 	ctx context.Context,
 	prID entities.PullRequestID,
 	oldReviewerID entities.UserID,
@@ -208,7 +206,7 @@ func (s *pullRequestDomainService) ReassignReviewer(
 	return newReviewerID, pr, nil
 }
 
-func (s *pullRequestDomainService) Merge(
+func (s *reviewerAssignmentService) Merge(
 	ctx context.Context,
 	prID entities.PullRequestID,
 ) (*entities.PullRequest, error) {

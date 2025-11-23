@@ -8,8 +8,8 @@ import (
 	"github.com/Traunin/review-assigner/internal/application/dto"
 	"github.com/Traunin/review-assigner/internal/application/mapper"
 	"github.com/Traunin/review-assigner/internal/domain/entities"
-	ds "github.com/Traunin/review-assigner/internal/domain/services"
 	"github.com/Traunin/review-assigner/internal/domain/repositories"
+	ds "github.com/Traunin/review-assigner/internal/domain/services"
 )
 
 var (
@@ -26,12 +26,12 @@ type PullRequestService interface {
 
 type pullRequestService struct {
     repo repositories.PullRequestRepository
-	prService ds.PullRequestDomainService
+	prService ds.ReviewerAssignmentService
 }
 
 func NewPullRequestService(
 	repo repositories.PullRequestRepository,
-	prService ds.PullRequestDomainService,
+	prService ds.ReviewerAssignmentService,
 ) PullRequestService {
     return &pullRequestService{
 		repo: repo,
@@ -58,7 +58,7 @@ func (s *pullRequestService) Create(
 	ctx context.Context,
 	input dto.CreatePRCmd,
 ) (dto.PullRequestDTO, error) {
-    entity, err := entities.NewPullRequest(
+	entity, err := entities.NewPullRequest(
 		input.PullRequestID,
 		input.PullRequestName,
 		input.AuthorID,
@@ -67,16 +67,12 @@ func (s *pullRequestService) Create(
 		time.Now(),
 		nil,
 	)
-
+	
 	if err != nil {
 		return dto.PullRequestDTO{},  err
 	}
+	created, err := s.prService.CreateAndAssign(ctx, entity)
 
-	if err := s.repo.Create(ctx, entity); err != nil {
-		return dto.PullRequestDTO{}, err
-	}
-
-	created, err := s.repo.FindByID(ctx, entity.ID())
 	if err != nil {
 		return dto.PullRequestDTO{}, err
 	}
