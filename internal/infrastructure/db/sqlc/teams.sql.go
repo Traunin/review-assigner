@@ -40,6 +40,26 @@ func (q *Queries) CreateTeam(ctx context.Context, teamName string) (Team, error)
 	return i, err
 }
 
+const deleteTeam = `-- name: DeleteTeam :exec
+DELETE FROM teams
+WHERE id = $1
+`
+
+func (q *Queries) DeleteTeam(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, deleteTeam, id)
+	return err
+}
+
+const deleteTeamMembers = `-- name: DeleteTeamMembers :exec
+DELETE FROM team_members
+WHERE team_id = $1
+`
+
+func (q *Queries) DeleteTeamMembers(ctx context.Context, teamID int32) error {
+	_, err := q.db.Exec(ctx, deleteTeamMembers, teamID)
+	return err
+}
+
 const getTeamByID = `-- name: GetTeamByID :one
 SELECT id, team_name
 FROM teams
@@ -126,6 +146,58 @@ func (q *Queries) GetTeamWithMembers(ctx context.Context, teamName string) ([]Ge
 	return items, nil
 }
 
+const getTeams = `-- name: GetTeams :many
+SELECT id, team_name
+FROM teams
+`
+
+func (q *Queries) GetTeams(ctx context.Context) ([]Team, error) {
+	rows, err := q.db.Query(ctx, getTeams)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Team{}
+	for rows.Next() {
+		var i Team
+		if err := rows.Scan(&i.ID, &i.TeamName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTeamsByUserID = `-- name: GetTeamsByUserID :many
+SELECT t.id, t.team_name
+FROM teams t
+JOIN team_members tm ON t.id = tm.team_id
+WHERE tm.user_id = $1
+`
+
+func (q *Queries) GetTeamsByUserID(ctx context.Context, userID string) ([]Team, error) {
+	rows, err := q.db.Query(ctx, getTeamsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Team{}
+	for rows.Next() {
+		var i Team
+		if err := rows.Scan(&i.ID, &i.TeamName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const removeTeamMember = `-- name: RemoveTeamMember :exec
 DELETE FROM team_members
 WHERE team_id = $1 AND user_id = $2
@@ -152,4 +224,20 @@ func (q *Queries) TeamExists(ctx context.Context, teamName string) (bool, error)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const updateTeam = `-- name: UpdateTeam :exec
+UPDATE teams
+SET team_name = $2
+WHERE id = $1
+`
+
+type UpdateTeamParams struct {
+	ID       int32  `json:"id"`
+	TeamName string `json:"team_name"`
+}
+
+func (q *Queries) UpdateTeam(ctx context.Context, arg UpdateTeamParams) error {
+	_, err := q.db.Exec(ctx, updateTeam, arg.ID, arg.TeamName)
+	return err
 }

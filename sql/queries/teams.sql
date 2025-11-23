@@ -43,3 +43,26 @@ WHERE team_id = $1 AND user_id = $2;
 SELECT COUNT(*) 
 FROM team_members 
 WHERE team_id = $1;
+
+-- name: DeleteTeam :exec
+DELETE FROM teams
+WHERE id = $1;
+
+-- name: GetTeams :many
+SELECT id, team_name
+FROM teams;
+
+-- name: UpdateTeam :exec
+UPDATE teams
+SET team_name = $2
+WHERE id = $1;
+
+-- name: DeleteTeamMembers :exec
+DELETE FROM team_members
+WHERE team_id = $1;
+
+-- name: GetTeamsByUserID :many
+SELECT t.id, t.team_name
+FROM teams t
+JOIN team_members tm ON t.id = tm.team_id
+WHERE tm.user_id = $1;

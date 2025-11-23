@@ -51,6 +51,16 @@ func (q *Queries) CreatePullRequest(ctx context.Context, arg CreatePullRequestPa
 	return i, err
 }
 
+const deletePullRequest = `-- name: DeletePullRequest :exec
+DELETE FROM pull_requests
+WHERE pull_request_id = $1
+`
+
+func (q *Queries) DeletePullRequest(ctx context.Context, pullRequestID string) error {
+	_, err := q.db.Exec(ctx, deletePullRequest, pullRequestID)
+	return err
+}
+
 const getOpenPRs = `-- name: GetOpenPRs :many
 SELECT 
     pull_request_id, 
@@ -155,6 +165,45 @@ func (q *Queries) GetPullRequestByID(ctx context.Context, pullRequestID string) 
 		&i.MergedAt,
 	)
 	return i, err
+}
+
+const getPullRequests = `-- name: GetPullRequests :many
+SELECT 
+    pull_request_id, 
+    pull_request_name, 
+    author_id, 
+    status,
+    created_at,
+    merged_at
+FROM pull_requests
+ORDER BY created_at DESC
+`
+
+func (q *Queries) GetPullRequests(ctx context.Context) ([]PullRequest, error) {
+	rows, err := q.db.Query(ctx, getPullRequests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PullRequest{}
+	for rows.Next() {
+		var i PullRequest
+		if err := rows.Scan(
+			&i.PullRequestID,
+			&i.PullRequestName,
+			&i.AuthorID,
+			&i.Status,
+			&i.CreatedAt,
+			&i.MergedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const pRExists = `-- name: PRExists :one

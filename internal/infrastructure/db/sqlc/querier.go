@@ -14,19 +14,27 @@ type Querier interface {
 	CreatePullRequest(ctx context.Context, arg CreatePullRequestParams) (PullRequest, error)
 	CreateTeam(ctx context.Context, teamName string) (Team, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeletePullRequest(ctx context.Context, pullRequestID string) error
+	DeleteTeam(ctx context.Context, id int32) error
+	DeleteTeamMembers(ctx context.Context, teamID int32) error
+	DeleteUser(ctx context.Context, userID string) error
 	GetActiveTeamMembers(ctx context.Context, teamID int32) ([]User, error)
 	GetActiveUsers(ctx context.Context) ([]User, error)
 	GetOpenPRs(ctx context.Context) ([]PullRequest, error)
 	GetPRsByAuthor(ctx context.Context, authorID string) ([]PullRequest, error)
 	GetPRsByReviewer(ctx context.Context, userID string) ([]GetPRsByReviewerRow, error)
 	GetPullRequestByID(ctx context.Context, pullRequestID string) (PullRequest, error)
+	GetPullRequests(ctx context.Context) ([]PullRequest, error)
 	GetReviewerCount(ctx context.Context, pullRequestID string) (int64, error)
 	GetReviewersByPR(ctx context.Context, pullRequestID string) ([]GetReviewersByPRRow, error)
 	GetTeamByID(ctx context.Context, id int32) (Team, error)
 	GetTeamByName(ctx context.Context, teamName string) (Team, error)
 	GetTeamMemberCount(ctx context.Context, teamID int32) (int64, error)
 	GetTeamWithMembers(ctx context.Context, teamName string) ([]GetTeamWithMembersRow, error)
+	GetTeams(ctx context.Context) ([]Team, error)
+	GetTeamsByUserID(ctx context.Context, userID string) ([]Team, error)
 	GetUserByID(ctx context.Context, userID string) (User, error)
+	GetUsers(ctx context.Context) ([]User, error)
 	IsUserReviewer(ctx context.Context, arg IsUserReviewerParams) (bool, error)
 	PRExists(ctx context.Context, pullRequestID string) (bool, error)
 	RemoveReviewer(ctx context.Context, arg RemoveReviewerParams) error
@@ -34,6 +42,8 @@ type Querier interface {
 	ReplaceReviewer(ctx context.Context, arg ReplaceReviewerParams) error
 	TeamExists(ctx context.Context, teamName string) (bool, error)
 	UpdatePRStatus(ctx context.Context, arg UpdatePRStatusParams) (PullRequest, error)
+	UpdateTeam(ctx context.Context, arg UpdateTeamParams) error
+	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 	UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (User, error)
 	UserExists(ctx context.Context, userID string) (bool, error)
 }

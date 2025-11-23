@@ -8,6 +8,10 @@ SELECT user_id, username, is_active
 FROM users
 WHERE user_id = $1;
 
+-- name: GetUsers :many
+SELECT user_id, username, is_active
+FROM users;
+
 -- name: UpdateUserStatus :one
 UPDATE users
 SET is_active = $2
@@ -29,3 +33,12 @@ SELECT EXISTS (
 SELECT user_id, username, is_active
 FROM users
 WHERE is_active = true;
+
+-- name: DeleteUser :exec
+DELETE FROM users
+WHERE user_id = $1;
+
+-- name: UpdateUser :exec
+UPDATE users
+SET username = $2, is_active = $3
+WHERE user_id = $1;
