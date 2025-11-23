@@ -13,7 +13,7 @@ type Reviewer struct {
 }
 
 type PullRequest struct {
-	id        PrID
+	id        PullRequestID
 	name      string
 	authorID  UserID
 	status    PRStatus
@@ -23,32 +23,36 @@ type PullRequest struct {
 }
 
 func NewPullRequest(
-	id PrID,
+	id PullRequestID,
 	name string,
 	authorID UserID,
+	status PRStatus,
 	assignedUserIDs []UserID,
+	createdAt time.Time,
+	mergedAt *time.Time,
 ) (*PullRequest, error) {
 	pr := &PullRequest{
 		id:        id,
 		name:      name,
 		authorID:  authorID,
-		status:    StatusOpen,
-		createdAt: time.Now(),
-		reviewers: make([]Reviewer, 0, len(assignedUserIDs)),
+		status:    status,
+		createdAt: createdAt,
+		mergedAt:  mergedAt,
+		reviewers: make([]Reviewer, len(assignedUserIDs)),
 	}
 
 	if err := pr.validate(); err != nil {
 		return nil, err
 	}
 
-	for _, uid := range assignedUserIDs {
+	for i, uid := range assignedUserIDs {
 		if uid == authorID {
 			return nil, ErrAuthorIsReviewer
 		}
-		pr.reviewers = append(pr.reviewers, Reviewer{
+		pr.reviewers[i] = Reviewer{
 			UserID:     uid,
 			AssignedAt: time.Now(),
-		})
+		}
 	}
 
 	return pr, nil
