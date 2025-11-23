@@ -1,0 +1,22 @@
+linters:
+  enable:
+    - gofmt
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
+    - typecheck
+
+linters-settings:
+  govet:
+    enable:
+      - shadow
+  
+run:
+  timeout: 5m
+  tests: true
+
+issues:
+  exclude-use-default: false

@@ -189,14 +189,14 @@ func (pr *PullRequest) MergedAt() time.Time {
 }
 
 func (pr *PullRequest) MergedAtPtr() *time.Time {
-    return pr.mergedAt
+	return pr.mergedAt
 }
 
 func (pr *PullRequest) Reviewers() []Reviewer {
 	return slices.Clone(pr.reviewers)
 }
 
-func (pr *PullRequest) IsMerged () bool {
+func (pr *PullRequest) IsMerged() bool {
 	return pr.status == StatusMerged
 }
 

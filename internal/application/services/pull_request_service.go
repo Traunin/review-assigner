@@ -13,19 +13,19 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("pull request not found")
+	ErrNotFound    = errors.New("pull request not found")
 	ErrPRNotLoaded = errors.New("failed to load pull request")
 )
 
 type PullRequestService interface {
-    GetByID(ctx context.Context, id entities.PullRequestID) (dto.PullRequestDTO, error)
-    Create(ctx context.Context, input dto.CreatePRCmd) (dto.PullRequestDTO, error)
+	GetByID(ctx context.Context, id entities.PullRequestID) (dto.PullRequestDTO, error)
+	Create(ctx context.Context, input dto.CreatePRCmd) (dto.PullRequestDTO, error)
 	Merge(ctx context.Context, id entities.PullRequestID) (dto.PullRequestDTO, error)
 	ReassignReviewer(ctx context.Context, input dto.ReassignReviewerCmd) (*dto.ReassignedDTO, error)
 }
 
 type pullRequestService struct {
-    repo repositories.PullRequestRepository
+	repo      repositories.PullRequestRepository
 	prService ds.ReviewerAssignmentService
 }
 
@@ -33,8 +33,8 @@ func NewPullRequestService(
 	repo repositories.PullRequestRepository,
 	prService ds.ReviewerAssignmentService,
 ) PullRequestService {
-    return &pullRequestService{
-		repo: repo,
+	return &pullRequestService{
+		repo:      repo,
 		prService: prService,
 	}
 }
@@ -43,15 +43,15 @@ func (s *pullRequestService) GetByID(
 	ctx context.Context,
 	id entities.PullRequestID,
 ) (dto.PullRequestDTO, error) {
-    pr, err := s.repo.FindByID(ctx, id)
-    if err != nil {
-        return dto.PullRequestDTO{}, err
-    }
-    if pr == nil {
-        return dto.PullRequestDTO{}, ErrNotFound
-    }
+	pr, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return dto.PullRequestDTO{}, err
+	}
+	if pr == nil {
+		return dto.PullRequestDTO{}, ErrNotFound
+	}
 
-    return mapper.ToPullRequestDTO(pr), nil
+	return mapper.ToPullRequestDTO(pr), nil
 }
 
 func (s *pullRequestService) Create(
@@ -67,9 +67,9 @@ func (s *pullRequestService) Create(
 		time.Now(),
 		nil,
 	)
-	
+
 	if err != nil {
-		return dto.PullRequestDTO{},  err
+		return dto.PullRequestDTO{}, err
 	}
 	created, err := s.prService.CreateAndAssign(ctx, entity)
 
