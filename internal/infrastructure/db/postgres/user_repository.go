@@ -148,3 +148,35 @@ func (r *UserRepository) GetActiveUsers(
 
 	return userEntities, nil
 }
+
+func (r *UserRepository) GetByTeamID(
+	ctx context.Context,
+	id entities.TeamID,
+) ([]*entities.User, error) {
+	users, err := r.db.Queries.GetUsersByTeamID(ctx, teamIdToPgInt4(id))
+	if err != nil {
+		return nil, err
+	}
+
+	userEntities := make([]*entities.User, len(users))
+	for i, user := range users {
+		var teamID *entities.TeamID
+		if user.TeamID.Valid {
+			tid := entities.TeamID(user.TeamID.Int32)
+			teamID = &tid
+		}
+
+		userEntity, err := entities.NewUser(
+			entities.UserID(user.UserID),
+			user.Username,
+			user.IsActive,
+			teamID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		userEntities[i] = userEntity
+	}
+
+	return userEntities, nil
+}

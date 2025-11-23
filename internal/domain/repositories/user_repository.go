@@ -9,4 +9,5 @@ import (
 type UserRepository interface {
 	Repository[entities.User, entities.UserID]
 	GetActiveUsers(ctx context.Context) ([]*entities.User, error)
+	GetByTeamID(ctx context.Context, id entities.TeamID) ([]*entities.User, error)
 }
