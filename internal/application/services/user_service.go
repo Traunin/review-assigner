@@ -13,7 +13,7 @@ import (
 type UserService interface {
 	AddUser(ctx context.Context, user *dto.UserDTO) error
 	DeleteUserByID(ctx context.Context, userID entities.UserID) error
-	GetAll (ctx context.Context) ([]*dto.UserDTO, error)
+	GetAll(ctx context.Context) ([]*dto.UserDTO, error)
 }
 
 type userService struct {
@@ -36,11 +36,11 @@ func (s *userService) AddUser(
 		return errors.New("user cannot be nil")
 	}
 
-	var teamID *entities.TeamID 
+	var teamID *entities.TeamID
 
 	if user.TeamID != nil {
 		intValue := *user.TeamID
-		convertedTeamID := entities.TeamID(intValue) 
+		convertedTeamID := entities.TeamID(intValue)
 		teamID = &convertedTeamID
 	}
 

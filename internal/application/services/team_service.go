@@ -15,8 +15,8 @@ var (
 )
 
 type TeamService interface {
-    CreateTeam(ctx context.Context, cmd dto.CreateTeamCmd) (*dto.TeamDTO, error)
-    GetTeam(ctx context.Context, teamName string) (*dto.TeamDTO, error)
+	CreateTeam(ctx context.Context, cmd dto.CreateTeamCmd) (*dto.TeamDTO, error)
+	GetTeam(ctx context.Context, teamName string) (*dto.TeamDTO, error)
 }
 
 type teamService struct {
@@ -51,7 +51,7 @@ func (s *teamService) CreateTeam(
 		return nil, err
 	}
 
-	if err := s.teams.Create(ctx, team); err != nil {
+	if err = s.teams.Create(ctx, team); err != nil {
 		return nil, err
 	}
 
@@ -64,14 +64,16 @@ func (s *teamService) CreateTeam(
 	}
 
 	for _, m := range cmd.Members {
-		u, err := s.users.FindByID(ctx, entities.UserID(m.UserID))
+		var u *entities.User
+		u, err = s.users.FindByID(ctx, entities.UserID(m.UserID))
 		if err != nil {
 			return nil, err
 		}
 
 		tid := team.ID()
 		if u == nil {
-			newUser, err := entities.NewUser(
+			var newUser *entities.User
+			newUser, err = entities.NewUser(
 				entities.UserID(m.UserID),
 				m.Username,
 				m.IsActive,
@@ -80,17 +82,14 @@ func (s *teamService) CreateTeam(
 			if err != nil {
 				return nil, err
 			}
-
-			if err := s.users.Create(ctx, newUser); err != nil {
+			if err = s.users.Create(ctx, newUser); err != nil {
 				return nil, err
 			}
-
 		} else {
 			u.SetUsername(m.Username)
 			u.SetActive(m.IsActive)
 			u.SetTeamID(&tid)
-
-			if err := s.users.Update(ctx, u); err != nil {
+			if err = s.users.Update(ctx, u); err != nil {
 				return nil, err
 			}
 		}

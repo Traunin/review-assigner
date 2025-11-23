@@ -142,36 +142,36 @@ func (r *TeamRepository) Update(
 }
 
 func (r *TeamRepository) FindActiveReviewersByTeamID(
-    ctx context.Context,
-    id entities.TeamID,
+	ctx context.Context,
+	id entities.TeamID,
 ) ([]*entities.User, error) {
-    userRows, err := r.db.Queries.GetActiveUsersByTeamID(
-        ctx,
-        teamIdToPgInt4(id),
-    )
-    if err != nil {
-        return nil, err
-    }
-    users := make([]*entities.User, 0, len(userRows))
-    for _, row := range userRows {
-        var teamID *entities.TeamID
-        if row.TeamID.Valid {
-            tid := entities.TeamID(row.TeamID.Int32)
-            teamID = &tid
-        }
+	userRows, err := r.db.Queries.GetActiveUsersByTeamID(
+		ctx,
+		teamIdToPgInt4(id),
+	)
+	if err != nil {
+		return nil, err
+	}
+	users := make([]*entities.User, 0, len(userRows))
+	for _, row := range userRows {
+		var teamID *entities.TeamID
+		if row.TeamID.Valid {
+			tid := entities.TeamID(row.TeamID.Int32)
+			teamID = &tid
+		}
 
-        user, err := entities.NewUser(
-            entities.UserID(row.UserID),
-            row.Username,
-            row.IsActive,
-            teamID,
-        )
-        if err != nil {
-            return nil, err
-        }
-        users = append(users, user)
-    }
-    return users, nil
+		user, err := entities.NewUser(
+			entities.UserID(row.UserID),
+			row.Username,
+			row.IsActive,
+			teamID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }
 
 func (r *TeamRepository) TeamExists(
