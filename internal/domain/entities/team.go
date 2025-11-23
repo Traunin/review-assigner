@@ -8,12 +8,13 @@ type Team struct {
 	members []UserID
 }
 
-func NewTeam(name string) (*Team, error) {
+func NewTeam(name string, id TeamID) (*Team, error) {
 	if name == "" {
 		return nil, ErrTeamNoName
 	}
 	return &Team{
 		name:    name,
+		id:      id,
 		members: make([]UserID, 0),
 	}, nil
 }
