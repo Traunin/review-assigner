@@ -195,3 +195,16 @@ func (pr *PullRequest) MergedAtPtr() *time.Time {
 func (pr *PullRequest) Reviewers() []Reviewer {
 	return slices.Clone(pr.reviewers)
 }
+
+func (pr *PullRequest) IsMerged () bool {
+	return pr.status == StatusMerged
+}
+
+func (pr *PullRequest) HasReviewer(id UserID) bool {
+	for _, r := range pr.reviewers {
+		if r.UserID == id {
+			return true
+		}
+	}
+	return false
+}
