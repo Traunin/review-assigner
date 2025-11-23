@@ -9,17 +9,11 @@ CREATE INDEX teams_team_name_index ON teams (team_name);
 CREATE TABLE users (
     user_id VARCHAR(255) PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT true
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    team_id INTEGER REFERENCES teams (id) ON DELETE SET NULL
 );
 CREATE INDEX users_is_active_index ON users (is_active);
-
-CREATE TABLE team_members (
-    team_id INTEGER NOT NULL REFERENCES teams (id) ON DELETE CASCADE,
-    user_id VARCHAR(255) NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
-    PRIMARY KEY (team_id, user_id)
-);
-CREATE INDEX team_members_user_id_index ON team_members (user_id);
-CREATE INDEX team_members_team_id_index ON team_members (team_id);
+CREATE INDEX users_team_id_index ON users (team_id);
 
 CREATE TABLE pull_requests (
     pull_request_id VARCHAR(255) PRIMARY KEY,

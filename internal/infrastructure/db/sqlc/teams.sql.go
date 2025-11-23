@@ -11,22 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addTeamMember = `-- name: AddTeamMember :exec
-INSERT INTO team_members (team_id, user_id)
-VALUES ($1, $2)
-ON CONFLICT (team_id, user_id) DO NOTHING
-`
-
-type AddTeamMemberParams struct {
-	TeamID int32  `json:"team_id"`
-	UserID string `json:"user_id"`
-}
-
-func (q *Queries) AddTeamMember(ctx context.Context, arg AddTeamMemberParams) error {
-	_, err := q.db.Exec(ctx, addTeamMember, arg.TeamID, arg.UserID)
-	return err
-}
-
 const createTeam = `-- name: CreateTeam :one
 INSERT INTO teams (team_name)
 VALUES ($1)
@@ -47,16 +31,6 @@ WHERE id = $1
 
 func (q *Queries) DeleteTeam(ctx context.Context, id int32) error {
 	_, err := q.db.Exec(ctx, deleteTeam, id)
-	return err
-}
-
-const deleteTeamMembers = `-- name: DeleteTeamMembers :exec
-DELETE FROM team_members
-WHERE team_id = $1
-`
-
-func (q *Queries) DeleteTeamMembers(ctx context.Context, teamID int32) error {
-	_, err := q.db.Exec(ctx, deleteTeamMembers, teamID)
 	return err
 }
 
@@ -88,62 +62,15 @@ func (q *Queries) GetTeamByName(ctx context.Context, teamName string) (Team, err
 
 const getTeamMemberCount = `-- name: GetTeamMemberCount :one
 SELECT COUNT(*) 
-FROM team_members 
+FROM users 
 WHERE team_id = $1
 `
 
-func (q *Queries) GetTeamMemberCount(ctx context.Context, teamID int32) (int64, error) {
+func (q *Queries) GetTeamMemberCount(ctx context.Context, teamID pgtype.Int4) (int64, error) {
 	row := q.db.QueryRow(ctx, getTeamMemberCount, teamID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
-}
-
-const getTeamWithMembers = `-- name: GetTeamWithMembers :many
-SELECT 
-    t.id as team_id,
-    t.team_name,
-    u.user_id,
-    u.username,
-    u.is_active
-FROM teams t
-LEFT JOIN team_members tm ON t.id = tm.team_id
-LEFT JOIN users u ON tm.user_id = u.user_id
-WHERE t.team_name = $1
-`
-
-type GetTeamWithMembersRow struct {
-	TeamID   int32       `json:"team_id"`
-	TeamName string      `json:"team_name"`
-	UserID   pgtype.Text `json:"user_id"`
-	Username pgtype.Text `json:"username"`
-	IsActive pgtype.Bool `json:"is_active"`
-}
-
-func (q *Queries) GetTeamWithMembers(ctx context.Context, teamName string) ([]GetTeamWithMembersRow, error) {
-	rows, err := q.db.Query(ctx, getTeamWithMembers, teamName)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetTeamWithMembersRow{}
-	for rows.Next() {
-		var i GetTeamWithMembersRow
-		if err := rows.Scan(
-			&i.TeamID,
-			&i.TeamName,
-			&i.UserID,
-			&i.Username,
-			&i.IsActive,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getTeams = `-- name: GetTeams :many
@@ -169,48 +96,6 @@ func (q *Queries) GetTeams(ctx context.Context) ([]Team, error) {
 		return nil, err
 	}
 	return items, nil
-}
-
-const getTeamsByUserID = `-- name: GetTeamsByUserID :many
-SELECT t.id, t.team_name
-FROM teams t
-JOIN team_members tm ON t.id = tm.team_id
-WHERE tm.user_id = $1
-`
-
-func (q *Queries) GetTeamsByUserID(ctx context.Context, userID string) ([]Team, error) {
-	rows, err := q.db.Query(ctx, getTeamsByUserID, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Team{}
-	for rows.Next() {
-		var i Team
-		if err := rows.Scan(&i.ID, &i.TeamName); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const removeTeamMember = `-- name: RemoveTeamMember :exec
-DELETE FROM team_members
-WHERE team_id = $1 AND user_id = $2
-`
-
-type RemoveTeamMemberParams struct {
-	TeamID int32  `json:"team_id"`
-	UserID string `json:"user_id"`
-}
-
-func (q *Queries) RemoveTeamMember(ctx context.Context, arg RemoveTeamMemberParams) error {
-	_, err := q.db.Exec(ctx, removeTeamMember, arg.TeamID, arg.UserID)
-	return err
 }
 
 const teamExists = `-- name: TeamExists :one

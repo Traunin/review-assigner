@@ -73,13 +73,9 @@ type Team struct {
 	TeamName string `json:"team_name"`
 }
 
-type TeamMember struct {
-	TeamID int32  `json:"team_id"`
-	UserID string `json:"user_id"`
-}
-
 type User struct {
-	UserID   string `json:"user_id"`
-	Username string `json:"username"`
-	IsActive bool   `json:"is_active"`
+	UserID   string      `json:"user_id"`
+	Username string      `json:"username"`
+	IsActive bool        `json:"is_active"`
+	TeamID   pgtype.Int4 `json:"team_id"`
 }

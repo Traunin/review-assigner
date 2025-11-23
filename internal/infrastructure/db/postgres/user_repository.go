@@ -6,6 +6,7 @@ import (
 	"github.com/Traunin/review-assigner/internal/domain/entities"
 	"github.com/Traunin/review-assigner/internal/infrastructure/db/sqlc"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type UserRepository struct {
@@ -22,10 +23,16 @@ func (r *UserRepository) Create(
 	ctx context.Context,
 	user *entities.User,
 ) error {
+	var pgTeamID pgtype.Int4
+	if user.TeamID() != nil {
+		pgTeamID = pgtype.Int4{Int32: int32(*user.TeamID()), Valid: true}
+	}
+
 	_, err := r.db.Queries.CreateUser(ctx, sqlc.CreateUserParams{
-		UserID:    user.ID().String(),
-		Username:  user.Username(),
-		IsActive:  user.IsActive(),
+		UserID:   user.ID().String(),
+		Username: user.Username(),
+		IsActive: user.IsActive(),
+		TeamID:   pgTeamID,
 	})
 
 	return err
@@ -49,12 +56,20 @@ func (r *UserRepository) FindByID(
 		return nil, err
 	}
 
+	var teamID *entities.TeamID
+	if user.TeamID.Valid {
+		tid := entities.TeamID(user.TeamID.Int32)
+		teamID = &tid
+	}
+
 	return entities.NewUser(
 		entities.UserID(user.UserID),
 		user.Username,
 		user.IsActive,
+		teamID,
 	)
 }
+
 func (r *UserRepository) FindAll(
 	ctx context.Context,
 ) ([]*entities.User, error) {
@@ -65,10 +80,17 @@ func (r *UserRepository) FindAll(
 
 	userEntities := make([]*entities.User, len(users))
 	for i, user := range users {
+		var teamID *entities.TeamID
+		if user.TeamID.Valid {
+			tid := entities.TeamID(user.TeamID.Int32)
+			teamID = &tid
+		}
+
 		userEntity, err := entities.NewUser(
 			entities.UserID(user.UserID),
 			user.Username,
 			user.IsActive,
+			teamID,
 		)
 		if err != nil {
 			return nil, err
@@ -83,10 +105,16 @@ func (r *UserRepository) Update(
 	ctx context.Context,
 	user *entities.User,
 ) error {
+	var pgTeamID pgtype.Int4
+	if user.TeamID() != nil {
+		pgTeamID = pgtype.Int4{Int32: int32(*user.TeamID()), Valid: true}
+	}
+
 	return r.db.Queries.UpdateUser(ctx, sqlc.UpdateUserParams{
-		UserID:    user.ID().String(),
-		Username:  user.Username(),
-		IsActive:  user.IsActive(),
+		UserID:   user.ID().String(),
+		Username: user.Username(),
+		IsActive: user.IsActive(),
+		TeamID:   pgTeamID,
 	})
 }
 
@@ -100,10 +128,17 @@ func (r *UserRepository) GetActiveUsers(
 
 	userEntities := make([]*entities.User, len(users))
 	for i, user := range users {
+		var teamID *entities.TeamID
+		if user.TeamID.Valid {
+			tid := entities.TeamID(user.TeamID.Int32)
+			teamID = &tid
+		}
+
 		userEntity, err := entities.NewUser(
 			entities.UserID(user.UserID),
 			user.Username,
 			user.IsActive,
+			teamID,
 		)
 		if err != nil {
 			return nil, err

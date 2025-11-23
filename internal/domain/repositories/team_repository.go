@@ -12,9 +12,10 @@ type TeamRepository interface {
 	FindTeamsByUserID(
 		ctx context.Context,
 		id entities.UserID,
-	) ([]*entities.Team, error)
+	) (*entities.Team, error)
 	FindActiveReviewersByTeamID(
 		ctx context.Context,
 		id entities.TeamID,
-	) ([]*entities.User, error)
+	) (*entities.User, error)
+	TeamExists(ctx context.Context, name string) (bool, error)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/Traunin/review-assigner/internal/domain/entities"
 	"github.com/Traunin/review-assigner/internal/infrastructure/db/sqlc"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type TeamRepository struct {
@@ -15,6 +16,13 @@ type TeamRepository struct {
 func NewTeamRepository(db *DB) *TeamRepository {
 	return &TeamRepository{
 		db: db,
+	}
+}
+
+func teamIdToPgInt4(id entities.TeamID) pgtype.Int4 {
+	return pgtype.Int4{
+		Int32: int32(id),
+		Valid: true,
 	}
 }
 
@@ -28,16 +36,18 @@ func (r *TeamRepository) buildTeamWithMembers(
 		return nil, err
 	}
 
-	memberRows, err := r.db.Queries.GetTeamWithMembers(ctx, teamName)
+	// a user can only be a member of one team
+	memberRows, err := r.db.Queries.GetUsersByTeamID(
+		ctx,
+		teamIdToPgInt4(team.ID()),
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, row := range memberRows {
-		if row.UserID.Valid {
-			if err := team.AddMember(entities.UserID(row.UserID.String)); err != nil {
-				return nil, err
-			}
+		if err := team.AddMember(entities.UserID(row.UserID)); err != nil {
+			return nil, err
 		}
 	}
 
@@ -48,22 +58,8 @@ func (r *TeamRepository) Create(
 	ctx context.Context,
 	team *entities.Team,
 ) error {
-	return r.db.execTx(ctx, func(q *sqlc.Queries) error {
-		if _, err := q.CreateTeam(ctx, team.Name()); err != nil {
-			return err
-		}
-
-		for _, userID := range team.Members() {
-			if err := q.AddTeamMember(ctx, sqlc.AddTeamMemberParams{
-				TeamID: int32(team.ID()),
-				UserID: userID.String(),
-			}); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
+	_, err := r.db.Queries.CreateTeam(ctx, team.Name())
+	return err
 }
 
 func (r *TeamRepository) DeleteByID(
@@ -121,77 +117,52 @@ func (r *TeamRepository) FindAll(
 	return teamEntities, nil
 }
 
-func (r *TeamRepository) FindTeamsByUserID(
-	ctx context.Context,
-	id entities.UserID,
-) ([]*entities.Team, error) {
-	teamRows, err := r.db.Queries.GetTeamsByUserID(ctx, id.String())
-	if err != nil {
-		return nil, err
-	}
-
-	teams := make([]*entities.Team, len(teamRows))
-	for i, teamRow := range teamRows {
-		team, err := r.buildTeamWithMembers(ctx, teamRow.ID, teamRow.TeamName)
-		if err != nil {
-			return nil, err
-		}
-		teams[i] = team
-	}
-
-	return teams, nil
-}
-
 func (r *TeamRepository) Update(
 	ctx context.Context,
 	team *entities.Team,
 ) error {
-	return r.db.execTx(ctx, func(q *sqlc.Queries) error {
-		if err := q.UpdateTeam(ctx, sqlc.UpdateTeamParams{
-			ID:       int32(team.ID()),
-			TeamName: team.Name(),
-		}); err != nil {
-			return err
-		}
-
-		if err := q.DeleteTeamMembers(ctx, int32(team.ID())); err != nil {
-			return err
-		}
-
-		for _, userID := range team.Members() {
-			if err := q.AddTeamMember(ctx, sqlc.AddTeamMemberParams{
-				TeamID: int32(team.ID()),
-				UserID: userID.String(),
-			}); err != nil {
-				return err
-			}
-		}
-
-		return nil
+	return r.db.Queries.UpdateTeam(ctx, sqlc.UpdateTeamParams{
+		ID:       int32(team.ID()),
+		TeamName: team.Name(),
 	})
 }
 
 func (r *TeamRepository) FindActiveReviewersByTeamID(
-	ctx context.Context,
-	id entities.TeamID,
+    ctx context.Context,
+    id entities.TeamID,
 ) ([]*entities.User, error) {
-	userRows, err := r.db.Queries.GetActiveTeamMembers(ctx, int32(id))
-	if err != nil {
-		return nil, err
-	}
+    userRows, err := r.db.Queries.GetActiveUsersByTeamID(
+        ctx,
+        teamIdToPgInt4(id),
+    )
+    if err != nil {
+        return nil, err
+    }
+    users := make([]*entities.User, 0, len(userRows))
+    for _, row := range userRows {
+        var teamID *entities.TeamID
+        if row.TeamID.Valid {
+            tid := entities.TeamID(row.TeamID.Int32)
+            teamID = &tid
+        }
 
-	users := make([]*entities.User, 0, len(userRows))
-	for _, row := range userRows {
-		user, err := entities.NewUser(
-			entities.UserID(row.UserID),
-			row.Username,
-			row.IsActive,
-		)
-		if err != nil {
-			return nil, err
-		}
-		users = append(users, user)
-	}
+        user, err := entities.NewUser(
+            entities.UserID(row.UserID),
+            row.Username,
+            row.IsActive,
+            teamID,
+        )
+        if err != nil {
+            return nil, err
+        }
+        users = append(users, user)
+    }
+    return users, nil
+}
 
-	return users, nil
+func (r *TeamRepository) TeamExists(
+	ctx context.Context,
+	name string,
+) (bool, error) {
+	return r.db.Queries.TeamExists(ctx, name)
 }

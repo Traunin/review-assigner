@@ -4,13 +4,20 @@ type User struct {
 	user_id   UserID
 	username  string
 	is_active bool
+	team_id   *TeamID
 }
 
-func NewUser(user_id UserID, username string, is_active bool) (*User, error) {
+func NewUser(
+	user_id UserID,
+	username string,
+	is_active bool,
+	team_id *TeamID,
+) (*User, error) {
 	user := &User{
 		user_id:   user_id,
 		username:  username,
 		is_active: is_active,
+		team_id:   team_id,
 	}
 
 	if err := validate(user); err != nil {
@@ -41,10 +48,22 @@ func (user *User) Deactivate() {
 	user.is_active = false
 }
 
+func (user *User) SetActive(is_active bool) {
+	user.is_active = is_active
+}
+
 func (user *User) ID() UserID {
 	return user.user_id
 }
 
 func (user *User) Username() string {
 	return user.username
+}
+
+func (user *User) TeamID() *TeamID {
+	return user.team_id
+}
+
+func (user *User) SetTeamID(teamID *TeamID) {
+	user.team_id = teamID
 }
