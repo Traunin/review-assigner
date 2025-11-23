@@ -43,23 +43,23 @@ func prStatusToDB(status entities.PRStatus) string {
 }
 
 func timeToPgTimestamptz(t time.Time) pgtype.Timestamptz {
-    if t.IsZero() {
-        return pgtype.Timestamptz{Valid: false}
-    }
-    return pgtype.Timestamptz{
-        Time:  t,
-        Valid: true,
-    }
+	if t.IsZero() {
+		return pgtype.Timestamptz{Valid: false}
+	}
+	return pgtype.Timestamptz{
+		Time:  t,
+		Valid: true,
+	}
 }
 
 func timePtrToPgTimestamptz(t *time.Time) pgtype.Timestamptz {
-    if t == nil || t.IsZero() {
-        return pgtype.Timestamptz{Valid: false}
-    }
-    return pgtype.Timestamptz{
-        Time:  *t,
-        Valid: true,
-    }
+	if t == nil || t.IsZero() {
+		return pgtype.Timestamptz{Valid: false}
+	}
+	return pgtype.Timestamptz{
+		Time:  *t,
+		Valid: true,
+	}
 }
 
 func pgTimestamptzToTime(ts pgtype.Timestamptz) time.Time {
