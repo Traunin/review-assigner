@@ -29,7 +29,7 @@ type Querier interface {
 	GetReviewersByPR(ctx context.Context, pullRequestID string) ([]GetReviewersByPRRow, error)
 	GetTeamByID(ctx context.Context, id int32) (Team, error)
 	GetTeamByName(ctx context.Context, teamName string) (Team, error)
-	GetTeamByUserID(ctx context.Context, userID string) (User, error)
+	GetTeamByUserID(ctx context.Context, userID string) (Team, error)
 	GetTeamMemberCount(ctx context.Context, teamID pgtype.Int4) (int64, error)
 	GetTeams(ctx context.Context) ([]Team, error)
 	GetUserByID(ctx context.Context, userID string) (User, error)

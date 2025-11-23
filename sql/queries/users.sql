@@ -24,7 +24,7 @@ FROM users
 WHERE team_id = $1;
 
 -- name: GetTeamByUserID :one
-SELECT user_id, username, is_active, team_id FROM teams t
+SELECT t.id, t.team_name FROM teams t
 JOIN users u ON u.team_id = t.id
 WHERE u.user_id = $1;
 

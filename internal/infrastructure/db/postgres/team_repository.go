@@ -97,6 +97,20 @@ func (r *TeamRepository) FindByName(
 	return r.buildTeamWithMembers(ctx, teamRow.ID, teamRow.TeamName)
 }
 
+func (r *TeamRepository) FindByUserID(
+	ctx context.Context,
+	id entities.UserID,
+) (*entities.Team, error) {
+	teamRow, err := r.db.Queries.GetTeamByUserID(ctx, id.String())
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return r.buildTeamWithMembers(ctx, teamRow.ID, teamRow.TeamName)
+}
+
 func (r *TeamRepository) FindAll(
 	ctx context.Context,
 ) ([]*entities.Team, error) {

@@ -114,20 +114,15 @@ func (q *Queries) GetActiveUsersByTeamID(ctx context.Context, teamID pgtype.Int4
 }
 
 const getTeamByUserID = `-- name: GetTeamByUserID :one
-SELECT user_id, username, is_active, team_id FROM teams t
+SELECT t.id, t.team_name FROM teams t
 JOIN users u ON u.team_id = t.id
 WHERE u.user_id = $1
 `
 
-func (q *Queries) GetTeamByUserID(ctx context.Context, userID string) (User, error) {
+func (q *Queries) GetTeamByUserID(ctx context.Context, userID string) (Team, error) {
 	row := q.db.QueryRow(ctx, getTeamByUserID, userID)
-	var i User
-	err := row.Scan(
-		&i.UserID,
-		&i.Username,
-		&i.IsActive,
-		&i.TeamID,
-	)
+	var i Team
+	err := row.Scan(&i.ID, &i.TeamName)
 	return i, err
 }
 
