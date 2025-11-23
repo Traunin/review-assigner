@@ -2,7 +2,7 @@ package entities
 
 type UserID string
 type TeamID int
-type PrID string
+type PullRequestID string
 
 type PRStatus string
 
@@ -13,4 +13,12 @@ const (
 
 func (s PRStatus) String() string {
 	return string(s)
+}
+
+func (id UserID) String() string {
+	return string(id)
+}
+
+func (id PullRequestID) String() string {
+	return string(id)
 }
