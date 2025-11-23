@@ -225,6 +225,11 @@ func (s *reviewerAssignmentService) Merge(
 	pr.Merge()
 
 	if err := s.prRepo.Update(ctx, pr); err != nil {
+		// race: someone else merged it first
+		latest, findErr := s.prRepo.FindByID(ctx, prID)
+		if findErr == nil && latest != nil && latest.IsMerged() {
+			return latest, nil
+		}
 		return nil, err
 	}
 

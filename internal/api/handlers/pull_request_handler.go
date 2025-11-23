@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/Traunin/review-assigner/internal/application/dto"
@@ -37,8 +38,8 @@ func (s *Server) PostPullRequestCreate(ctx echo.Context) error {
 	pr, err := s.prService.Create(ctx.Request().Context(), cmd)
 	if err != nil {
 		// Check for domain-specific errors
-		if errors.Is(err, domainservices.ErrAuthorNotFound) || 
-		   errors.Is(err, domainservices.ErrTeamNotFound) {
+		if errors.Is(err, domainservices.ErrAuthorNotFound) ||
+			errors.Is(err, domainservices.ErrTeamNotFound) {
 			return ctx.JSON(http.StatusNotFound, map[string]any{
 				"error": map[string]string{
 					"code":    "NOT_FOUND",
@@ -86,7 +87,8 @@ func (s *Server) PostPullRequestMerge(ctx echo.Context) error {
 		entities.PullRequestID(req.PullRequestID),
 	)
 	if err != nil {
-		if errors.Is(err, services.ErrNotFound) {
+		if errors.Is(err, services.ErrNotFound) ||
+			errors.Is(err, domainservices.ErrPRNotFound) {
 			return ctx.JSON(http.StatusNotFound, map[string]any{
 				"error": map[string]string{
 					"code":    "NOT_FOUND",
@@ -94,6 +96,7 @@ func (s *Server) PostPullRequestMerge(ctx echo.Context) error {
 				},
 			})
 		}
+		fmt.Printf("Merge error: %v\n", err)
 		return ctx.JSON(http.StatusInternalServerError, map[string]any{
 			"error": map[string]string{
 				"code":    "INTERNAL_ERROR",
@@ -108,74 +111,74 @@ func (s *Server) PostPullRequestMerge(ctx echo.Context) error {
 }
 
 func (s *Server) PostPullRequestReassign(ctx echo.Context) error {
-    var req struct {
-        PullRequestID string `json:"pull_request_id"`
-        OldUserID     string `json:"old_user_id"`
-    }
-    if err := ctx.Bind(&req); err != nil {
-        return ctx.JSON(http.StatusBadRequest, map[string]any{
-            "error": map[string]string{
-                "code":    "INVALID_REQUEST",
-                "message": "invalid request body",
-            },
-        })
-    }
+	var req struct {
+		PullRequestID string `json:"pull_request_id"`
+		OldUserID     string `json:"old_user_id"`
+	}
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]any{
+			"error": map[string]string{
+				"code":    "INVALID_REQUEST",
+				"message": "invalid request body",
+			},
+		})
+	}
 
-    cmd := dto.ReassignReviewerCmd{
-        OldUserID:     entities.UserID(req.OldUserID),
-        PullRequestID: entities.PullRequestID(req.PullRequestID),
-    }
+	cmd := dto.ReassignReviewerCmd{
+		OldUserID:     entities.UserID(req.OldUserID),
+		PullRequestID: entities.PullRequestID(req.PullRequestID),
+	}
 
-    result, err := s.prService.ReassignReviewer(ctx.Request().Context(), cmd)
-    if err != nil {
-        if errors.Is(err, domainservices.ErrPRAlreadyMerged) {
-            return ctx.JSON(http.StatusConflict, map[string]any{
-                "error": map[string]string{
-                    "code":    "PR_MERGED",
-                    "message": "cannot reassign on merged PR",
-                },
-            })
-        }
-        
-        if errors.Is(err, domainservices.ErrUserNotReviewer) {
-            return ctx.JSON(http.StatusConflict, map[string]any{
-                "error": map[string]string{
-                    "code":    "NOT_ASSIGNED",
-                    "message": "reviewer is not assigned to this PR",
-                },
-            })
-        }
-        
-        if errors.Is(err, domainservices.ErrNoCandidate) {
-            return ctx.JSON(http.StatusConflict, map[string]any{
-                "error": map[string]string{
-                    "code":    "NO_CANDIDATE",
-                    "message": "no active replacement candidate in team",
-                },
-            })
-        }
-        
-        if errors.Is(err, domainservices.ErrPRNotFound) {
-            return ctx.JSON(http.StatusNotFound, map[string]any{
-                "error": map[string]string{
-                    "code":    "NOT_FOUND",
-                    "message": err.Error(),
-                },
-            })
-        }
-        
-        return ctx.JSON(http.StatusInternalServerError, map[string]any{
-            "error": map[string]string{
-                "code":    "INTERNAL_ERROR",
-                "message": err.Error(),
-            },
-        })
-    }
+	result, err := s.prService.ReassignReviewer(ctx.Request().Context(), cmd)
+	if err != nil {
+		if errors.Is(err, domainservices.ErrPRAlreadyMerged) {
+			return ctx.JSON(http.StatusConflict, map[string]any{
+				"error": map[string]string{
+					"code":    "PR_MERGED",
+					"message": "cannot reassign on merged PR",
+				},
+			})
+		}
 
-    return ctx.JSON(http.StatusOK, map[string]any{
-        "pr":          formatPullRequest(*result.PullRequestID),
-        "replaced_by": string(result.Assigned),
-    })
+		if errors.Is(err, domainservices.ErrUserNotReviewer) {
+			return ctx.JSON(http.StatusConflict, map[string]any{
+				"error": map[string]string{
+					"code":    "NOT_ASSIGNED",
+					"message": "reviewer is not assigned to this PR",
+				},
+			})
+		}
+
+		if errors.Is(err, domainservices.ErrNoCandidate) {
+			return ctx.JSON(http.StatusConflict, map[string]any{
+				"error": map[string]string{
+					"code":    "NO_CANDIDATE",
+					"message": "no active replacement candidate in team",
+				},
+			})
+		}
+
+		if errors.Is(err, domainservices.ErrPRNotFound) {
+			return ctx.JSON(http.StatusNotFound, map[string]any{
+				"error": map[string]string{
+					"code":    "NOT_FOUND",
+					"message": err.Error(),
+				},
+			})
+		}
+
+		return ctx.JSON(http.StatusInternalServerError, map[string]any{
+			"error": map[string]string{
+				"code":    "INTERNAL_ERROR",
+				"message": err.Error(),
+			},
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]any{
+		"pr":          formatPullRequest(*result.PullRequestID),
+		"replaced_by": string(result.Assigned),
+	})
 }
 
 func formatPullRequest(pr dto.PullRequestDTO) map[string]any {
