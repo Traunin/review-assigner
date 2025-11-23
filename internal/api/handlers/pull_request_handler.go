@@ -102,7 +102,7 @@ func (s *Server) PostPullRequestMerge(ctx echo.Context) error {
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, map[string]interface{}{
+	return ctx.JSON(http.StatusOK, map[string]any{
 		"pr": formatPullRequest(pr),
 	})
 }

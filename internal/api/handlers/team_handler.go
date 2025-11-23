@@ -20,7 +20,7 @@ func (s *Server) PostTeamAdd(ctx echo.Context) error {
 	}
 
 	if err := ctx.Bind(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, map[string]interface{}{
+		return ctx.JSON(http.StatusBadRequest, map[string]any{
 			"error": map[string]string{
 				"code":    "INVALID_REQUEST",
 				"message": "invalid request body",
@@ -44,14 +44,14 @@ func (s *Server) PostTeamAdd(ctx echo.Context) error {
 	team, err := s.teamService.CreateTeam(ctx.Request().Context(), cmd)
 	if err != nil {
 		if err == services.ErrTeamExists {
-			return ctx.JSON(http.StatusBadRequest, map[string]interface{}{
+			return ctx.JSON(http.StatusBadRequest, map[string]any{
 				"error": map[string]string{
 					"code":    "TEAM_EXISTS",
 					"message": "team_name already exists",
 				},
 			})
 		}
-		return ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return ctx.JSON(http.StatusInternalServerError, map[string]any{
 			"error": map[string]string{
 				"code":    "INTERNAL_ERROR",
 				"message": err.Error(),
@@ -64,7 +64,7 @@ func (s *Server) PostTeamAdd(ctx echo.Context) error {
 		entities.TeamID(team.ID),
 	)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return ctx.JSON(http.StatusInternalServerError, map[string]any{
 			"error": map[string]string{
 				"code":    "INTERNAL_ERROR",
 				"message": err.Error(),
@@ -72,17 +72,17 @@ func (s *Server) PostTeamAdd(ctx echo.Context) error {
 		})
 	}
 
-	members := make([]map[string]interface{}, len(users))
+	members := make([]map[string]any, len(users))
 	for i, u := range users {
-		members[i] = map[string]interface{}{
+		members[i] = map[string]any{
 			"user_id":   string(u.ID()),
 			"username":  u.Username(),
 			"is_active": u.IsActive(),
 		}
 	}
 
-	return ctx.JSON(http.StatusCreated, map[string]interface{}{
-		"team": map[string]interface{}{
+	return ctx.JSON(http.StatusCreated, map[string]any{
+		"team": map[string]any{
 			"team_name": team.TeamName,
 			"members":   members,
 		},
@@ -92,7 +92,7 @@ func (s *Server) PostTeamAdd(ctx echo.Context) error {
 func (s *Server) GetTeamGet(ctx echo.Context) error {
 	teamName := ctx.QueryParam("team_name")
 	if teamName == "" {
-		return ctx.JSON(http.StatusBadRequest, map[string]interface{}{
+		return ctx.JSON(http.StatusBadRequest, map[string]any{
 			"error": map[string]string{
 				"code":    "INVALID_REQUEST",
 				"message": "team_name is required",
@@ -103,14 +103,14 @@ func (s *Server) GetTeamGet(ctx echo.Context) error {
 	team, err := s.teamService.GetTeam(ctx.Request().Context(), teamName)
 	if err != nil {
 		if err == services.ErrTeamNotFound {
-			return ctx.JSON(http.StatusNotFound, map[string]interface{}{
+			return ctx.JSON(http.StatusNotFound, map[string]any{
 				"error": map[string]string{
 					"code":    "NOT_FOUND",
 					"message": "team not found",
 				},
 			})
 		}
-		return ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return ctx.JSON(http.StatusInternalServerError, map[string]any{
 			"error": map[string]string{
 				"code":    "INTERNAL_ERROR",
 				"message": err.Error(),
@@ -123,7 +123,7 @@ func (s *Server) GetTeamGet(ctx echo.Context) error {
 		entities.TeamID(team.ID),
 	)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return ctx.JSON(http.StatusInternalServerError, map[string]any{
 			"error": map[string]string{
 				"code":    "INTERNAL_ERROR",
 				"message": err.Error(),
@@ -131,16 +131,16 @@ func (s *Server) GetTeamGet(ctx echo.Context) error {
 		})
 	}
 
-	members := make([]map[string]interface{}, len(users))
+	members := make([]map[string]any, len(users))
 	for i, u := range users {
-		members[i] = map[string]interface{}{
+		members[i] = map[string]any{
 			"user_id":   string(u.ID()),
 			"username":  u.Username(),
 			"is_active": u.IsActive(),
 		}
 	}
 
-	return ctx.JSON(http.StatusOK, map[string]interface{}{
+	return ctx.JSON(http.StatusOK, map[string]any{
 		"team_name": team.TeamName,
 		"members":   members,
 	})
