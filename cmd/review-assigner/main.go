@@ -85,6 +85,10 @@ func registerRoutes(e *echo.Echo, server *handlers.Server) {
 	e.POST("/pullRequest/merge", server.PostPullRequestMerge)
 	e.POST("/pullRequest/reassign", server.PostPullRequestReassign)
 
+	// statistics endpoints
+	e.GET("/stats/reviewers", server.GetStatsReviewers)
+	e.GET("/stats/pullRequests", server.GetStatsPullRequests)
+
 	// healthcheck
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(200, map[string]string{"status": "ok"})
